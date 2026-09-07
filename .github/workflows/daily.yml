@@ -1,0 +1,66 @@
+# 매일 공고를 수집해 대시보드를 GitHub Pages 로 올린다.
+#
+# PC 가 꺼져 있어도 도는 것이 이 워크플로의 존재 이유다. 마이홈 API 는 아카이브가
+# 아니라 '마감 안 된 공고'만 주기 때문에, 하루를 건너뛰면 그 사이 마감된 공고는
+# 영영 되살릴 수 없다. (PROGRESS.md "마이홈 API 실측" 참고)
+name: daily
+
+on:
+  schedule:
+    # GitHub cron 은 UTC. KST = UTC+9.
+    - cron: "10 0 * * *"   # 09:10 KST
+    - cron: "10 9 * * *"   # 18:10 KST
+  workflow_dispatch:        # 수동 실행 버튼
+
+permissions:
+  contents: write   # listings.db 를 다시 커밋해야 한다
+  pages: write
+  id-token: write
+
+# 두 실행이 겹쳐 DB 를 동시에 밀지 않게 한다.
+concurrency:
+  group: daily
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: 수집 + 대시보드 생성
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: python -m src.main
+
+      - name: DB 커밋
+        # 상태를 남겨야 다음 실행이 '신규/변경'을 판정할 수 있고, 마감돼 API 에서
+        # 사라진 공고도 DB 에는 남는다. 이 저장소가 사실상 유일한 아카이브다.
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/listings.db
+          git diff --quiet --cached || git commit -m "state: $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push
+
+      - name: Pages 준비
+        run: |
+          mkdir -p _site
+          cp data/dashboard.html _site/index.html
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

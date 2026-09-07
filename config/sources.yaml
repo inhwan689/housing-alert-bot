@@ -1,0 +1,55 @@
+# 수집 소스 정의. enabled: false 로 두면 건너뜁니다.
+
+sources:
+  - name: lh_notice
+    label: LH 분양임대공고
+    type: api
+    enabled: true
+    endpoint: https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1
+    # 공고유형코드: 05=분양주택, 06=임대주택 (01=토지 등은 제외)
+    notice_types: ["05", "06"]
+    # 오늘 기준 며칠 전 공고까지 훑을지
+    lookback_days: 60
+    page_size: 100
+
+  - name: myhome_notice
+    label: 마이홈포털 공공주택 모집공고
+    type: api
+    enabled: true
+    endpoint: https://apis.data.go.kr/1613000/HWSPR02/rsdtRcritNtcList
+    # LH + 지방도시공사. 접수중인 공고만 준다 — 마감되면 응답에서 사라진다.
+    # lookback_days 를 쓰지 않는다 — 이 API의 기간 파라미터는 접수기간이 아니라
+    # '모집공고월'이라, 수시모집 건(공고 2월/접수 12월까지)이 통째로 잘린다.
+    page_size: 100
+
+  - name: applyhome_apt
+    label: 청약홈 APT 분양
+    type: api
+    enabled: true
+    endpoint: https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail
+    lookback_days: 60
+    page_size: 100
+
+  - name: applyhome_officetel
+    label: 청약홈 오피스텔/도시형/민간임대
+    type: api
+    enabled: true
+    endpoint: https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getUrbtyOfctlLttotPblancDetail
+    lookback_days: 60
+    page_size: 100
+
+  - name: applyhome_public_rent
+    label: 청약홈 공공지원민간임대
+    type: api
+    enabled: true
+    endpoint: https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getPblPvtRentLttotPblancDetail
+    lookback_days: 60
+    page_size: 100
+
+  # SH공사(서울주택도시공사)는 공개 API가 없어 XHR 분석이 필요합니다.
+  # scripts/probe 로 엔드포인트를 찾은 뒤 활성화하세요.
+  - name: sh_notice
+    label: SH공사 공고
+    type: xhr
+    enabled: false
+    endpoint: ""

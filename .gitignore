@@ -1,0 +1,12 @@
+.env
+data/*.db-journal
+data/raw/
+logs/
+_site/
+__pycache__/
+*.pyc
+.venv/
+node_modules/
+data/dashboard.html
+PROGRESS.md
+CLAUDE.md
