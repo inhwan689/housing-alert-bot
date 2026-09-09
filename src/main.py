@@ -52,6 +52,7 @@ def main() -> int:
     con = store.connect()
     all_changes = []
     had_error = False
+    ok_n = 0
 
     for source_cfg in config.SOURCES:
         name = source_cfg.get("name", "")
@@ -75,6 +76,7 @@ def main() -> int:
             store.log_run(con, name, len(listings), new_n, upd_n)
             log.info("%s: 수집 %s / 신규 %s / 변경 %s", label, len(listings), new_n, upd_n)
             all_changes.extend(changes)
+            ok_n += 1
         except Exception as exc:  # 한 소스가 죽어도 나머지는 계속 간다
             had_error = True
             reason = mask(exc)  # 인증키가 로그/DB에 남지 않도록
@@ -91,7 +93,7 @@ def main() -> int:
         log.info("시드 완료: %s건을 알림 완료로 표시. 이후 실행부터 새 공고만 알립니다.",
                  len(all_changes))
         con.close()
-        return 1 if had_error else 0
+        return 1 if had_error and ok_n == 0 else 0
 
     kept = apply_filters(all_changes, config.FILTERS)
     # 마감 임박 순. 마감일을 모르는 건 뒤로 민다.
@@ -105,7 +107,13 @@ def main() -> int:
         log.info("새 공고 %s건. 대시보드: %s", len(kept), config.DASHBOARD_PATH)
 
     con.close()
-    return 1 if had_error else 0
+    # 한 소스가 죽어도 나머지가 살아 있으면 성공으로 끝낸다.
+    # CI 는 종료코드가 0 이 아니면 뒤따르는 스텝(DB 커밋·Pages 배포)을 통째로 건너뛰므로,
+    # 여기서 1 을 뱉으면 성공한 소스의 수집분까지 커밋 없이 버려진다.
+    # 마이홈 API 는 마감된 공고를 더 이상 주지 않아 그날 치를 되살릴 방법이 없다.
+    # (실제 사고: 2026-09-09 09:10 KST 실행. PROGRESS.md 참고)
+    # 전부 실패했을 때만 1 — 그때는 어차피 커밋할 새 데이터가 없다.
+    return 1 if had_error and ok_n == 0 else 0
 
 
 if __name__ == "__main__":
