@@ -75,12 +75,12 @@ _SIDO = {
 
 
 def _short_place(addr: str) -> str:
-    """'서울특별시 강서구 공항대로81길 14' → '서울 강서구 공항대로81길'. 번지는 뗀다."""
+    """'서울특별시 강서구 공항대로81길 14' → '서울 강서구 공항대로81길 14'. 시·도만 줄인다."""
     parts = addr.split()
     if not parts:
         return ""
     parts[0] = _SIDO.get(parts[0], parts[0])
-    return " ".join(parts[:3])
+    return " ".join(parts)
 
 
 def _won(v: str) -> int:

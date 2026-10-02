@@ -18,6 +18,11 @@ def matches(item: Listing, cfg: dict) -> bool:
 
     대시보드는 마감된 공고도 '마감' 탭에 보여줘야 해서 두 판정을 분리했다.
     """
+    # 유형은 단어가 아니라 카테고리로 거른다. '분양'을 제외어로 넣으면
+    # '분양전환공공임대' 같은 임대 공고까지 같이 날아간다.
+    if item.category in (cfg.get("exclude_categories") or []):
+        return False
+
     haystack = _haystack(item)
     exclude = [s for s in (cfg.get("exclude_keywords") or []) if s]
     if any(word in haystack for word in exclude):

@@ -64,7 +64,10 @@ def _to_listing(row: dict, source_name: str) -> Listing | None:
     source_id = pick(row, "PBLANC_NO", "HOUSE_MANAGE_NO") or str(abs(hash(title)))
 
     house_kind = pick(row, "HOUSE_SECD_NM", "RENT_SECD_NM", default="")
-    category = "임대" if "임대" in house_kind or "임대" in source_name else "분양"
+    # 오피스텔 API 의 HOUSE_SECD_NM 은 '도시형/오피스텔/생활숙박시설/민간임대' 로 뭉쳐 와서
+    # 늘 '임대'가 들어간다. 실제 유형(오피스텔·도시형생활주택=분양)은 세부 구분에 있다.
+    kind_detail = pick(row, "HOUSE_DTL_SECD_NM", default="") or house_kind
+    category = "임대" if "임대" in kind_detail or "임대" in source_name else "분양"
 
     return Listing(
         source=source_name,
