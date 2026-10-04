@@ -74,7 +74,8 @@ def _to_listing(row: dict, source_name: str) -> Listing | None:
         source_id=source_id,
         title=title,
         category=category,
-        region=pick(row, "SUBSCRPT_AREA_CODE_NM", "HSSPLY_ADRES"),
+        # 주소를 먼저 쓴다. 공급지역명은 '서울' 뿐이라 구 필터가 동작하지 않는다.
+        region=pick(row, "HSSPLY_ADRES", "SUBSCRPT_AREA_CODE_NM"),
         supplier=pick(row, "BSNS_MBY_NM", "CNSTRCT_ENTRPS_NM"),
         notice_date=norm_date(pick(row, "RCRIT_PBLANC_DE")),
         apply_start=norm_date(pick(row, "RCEPT_BGNDE", "SUBSCRPT_RCEPT_BGNDE")),

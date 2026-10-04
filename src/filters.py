@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date
 
 from .models import Listing
@@ -33,7 +34,16 @@ def matches(item: Listing, cfg: dict) -> bool:
     region_include = [s for s in (cfg.get("region_include") or []) if s]
     if region_include and item.region and not any(word in haystack for word in region_include):
         return False
+
+    # 자치구까지 적힌 공고만 구 목록으로 거른다. 시·도만 있는 공고(전국 전세임대,
+    # LH 목록)는 어느 구인지 알 수 없으므로 통과시킨다 — 위 region 규칙과 같은 사상.
+    districts = [s for s in (cfg.get("district_include") or []) if s]
+    if districts and _DISTRICT.search(item.region) and not any(d in item.region for d in districts):
+        return False
     return True
+
+
+_DISTRICT = re.compile(r"\S+구\b")
 
 
 def is_highlight(item: Listing, cfg: dict) -> bool:

@@ -102,6 +102,19 @@ def main() -> int:
     check("원본 행 전부 보관", len(merged[0].raw["_rows"]), 3)
     check("서울 조건 통과", len(apply_filters([(merged[0], "new")], cfg)), 1)
 
+    print("\n자치구 필터")
+    dcfg = {**cfg, "district_include": ["동작구", "관악구"]}
+    pool = [
+        (make("D1", "행복주택", region="서울특별시 동작구"), "new"),
+        (make("D2", "행복주택", region="서울특별시 노원구"), "new"),
+        (make("D3", "매입임대", region="서울특별시 노원구, 서울특별시 관악구"), "new"),
+        (make("D4", "LH 공고", region="서울특별시"), "new"),
+        (merged[0], "new"),
+    ]
+    kept = apply_filters(pool, dcfg)
+    check("목록 밖 구만 탈락, 구 없는 공고는 통과",
+          sorted(i.source_id for i, _ in kept), ["19631-0", "D1", "D3", "D4"])
+
     print("\n알림 출력(dry-run)")
     check("웹훅 없이도 안전하게 처리", send("", kept, dry_run=True), True)
 
