@@ -11,6 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src import store  # noqa: E402
+from src.collectors.myhome_api import _merge_areas, _to_listing  # noqa: E402
 from src.filters import apply_filters  # noqa: E402
 from src.models import Listing, norm_date  # noqa: E402
 from src.notify import send  # noqa: E402
@@ -90,6 +91,16 @@ def main() -> int:
     check("통과한 공고", sorted(i.source_id for i, _ in kept), ["B1", "B5"])
     check("청년 공고는 강조", next(i.highlight for i, _ in kept if i.source_id == "B1"), True)
     check("강조어 없으면 일반", next(i.highlight for i, _ in kept if i.source_id == "B5"), False)
+
+    # 마이홈은 전국 공고를 시·도마다 같은 키로 1행씩 준다. 덮어쓰면 서울 행이 사라진다.
+    print("\n마이홈 지역 병합")
+    rows = [{"pblancId": "19631", "houseSn": 0, "pblancNm": "2026년 청년 전세임대 1순위", "brtcNm": b,
+             "endDe": "20991231"} for b in ("인천광역시", "서울특별시", "부산광역시")]
+    merged = _merge_areas([_to_listing(r) for r in rows])
+    check("한 건으로 합침", len(merged), 1)
+    check("모든 지역 보존", merged[0].region, "인천광역시, 서울특별시, 부산광역시")
+    check("원본 행 전부 보관", len(merged[0].raw["_rows"]), 3)
+    check("서울 조건 통과", len(apply_filters([(merged[0], "new")], cfg)), 1)
 
     print("\n알림 출력(dry-run)")
     check("웹훅 없이도 안전하게 처리", send("", kept, dry_run=True), True)

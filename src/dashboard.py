@@ -100,6 +100,16 @@ def _details(source: str, raw: str) -> dict:
         r = json.loads(raw or "{}")
     except ValueError:
         r = {}
+    if source == "myhome_notice" and r.get("_rows"):
+        # 여러 지역이 합쳐진 공고 (collectors.myhome_api._merge_areas).
+        rows = r["_rows"]
+        sidos = list(dict.fromkeys(_SIDO.get(x.get("brtcNm", ""), x.get("brtcNm", "")) for x in rows))
+        return {
+            "kind": pick(r, "suplyTyNm"),
+            "house": pick(r, "houseTyNm"),
+            "place": "전국" if len(sidos) >= 10 else ", ".join(s for s in sidos if s),
+            "units": sum(_won(pick(x, "sumSuplyCo")) for x in rows),
+        }
     if source == "myhome_notice":
         return {
             "kind": pick(r, "suplyTyNm"),

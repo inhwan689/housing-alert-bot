@@ -62,8 +62,32 @@ def collect(cfg: dict, api_key: str) -> list[Listing]:
             break
         time.sleep(0.4)  # 공공 API 예의
 
+    results = _merge_areas(results)
     log.info("마이홈포털: %s건 수집", len(results))
     return results
+
+
+def _merge_areas(listings: list[Listing]) -> list[Listing]:
+    """같은 공고ID+단지번호로 지역만 다른 행이 여러 개 온다. 하나로 합친다.
+
+    2026-10-04 실측: 244행 중 고유 키 108개. 전국단위 전세임대는 시·도마다 1행씩
+    16행, 매입임대는 자치구마다 1행씩 온다. 그대로 저장하면 마지막 행이 앞 행을
+    덮어써서 '청년 전세임대 1순위'가 region=부산광역시 로 남아 서울 필터에 걸렸다.
+    region 에는 모든 지역을 남기고, 원본 행은 raw["_rows"] 에 전부 보관한다.
+    """
+    groups: dict[str, list[Listing]] = {}
+    for item in listings:
+        groups.setdefault(item.source_id, []).append(item)
+
+    merged: list[Listing] = []
+    for group in groups.values():
+        first = group[0]
+        if len(group) > 1:
+            areas = list(dict.fromkeys(x.region for x in group if x.region))
+            first.region = ", ".join(areas)
+            first.raw = {**first.raw, "_rows": [x.raw for x in group]}
+        merged.append(first)
+    return merged
 
 
 def _to_listing(row: dict) -> Listing | None:
