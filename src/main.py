@@ -6,7 +6,7 @@ import logging
 import sys
 
 from . import config, dashboard, store
-from .collectors import applyhome_api, lh_api, myhome_api, soco_seoul
+from .collectors import applyhome_api, lh_api, myhome_api, sh_board, soco_seoul
 from .collectors.base import mask
 from .filters import apply_filters
 from .notify import send
@@ -19,6 +19,7 @@ COLLECTORS = {
     "applyhome_officetel": applyhome_api.collect,
     "applyhome_public_rent": applyhome_api.collect,
     "soco_youth": soco_seoul.collect,
+    "sh_notice": sh_board.collect,
 }
 
 

@@ -55,10 +55,11 @@ sources:
     endpoint: https://soco.seoul.go.kr/youth/pgm/home/yohome/bbsListJson.json
     lookback_days: 60
 
-  # SH공사(서울주택도시공사)는 공개 API가 없어 XHR 분석이 필요합니다.
-  # scripts/probe 로 엔드포인트를 찾은 뒤 활성화하세요.
+  # SH공사(서울주택도시공사). 공개 API·XHR 없음 — 서버 렌더 HTML 게시판을 파싱한다.
+  # 모집공고가 아닌 글(발표·계약안내 등)은 category=공지 로 저장만 한다.
   - name: sh_notice
     label: SH공사 공고
-    type: xhr
-    enabled: false
-    endpoint: ""
+    type: html
+    enabled: true
+    endpoint: https://www.i-sh.co.kr/main/lay2/program/S1T294C297/www/brd/m_247/list.do
+    lookback_days: 30
