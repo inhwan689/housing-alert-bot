@@ -46,6 +46,15 @@ sources:
     lookback_days: 60
     page_size: 100
 
+  # 서울시 청년안심주택. 공개 API 없음 — 목록 페이지의 XHR JSON 을 호출한다.
+  # 민간 추가모집은 공고 후 4일 안팎에 선착순·1일 접수가 많다.
+  - name: soco_youth
+    label: 서울시 청년안심주택
+    type: xhr
+    enabled: true
+    endpoint: https://soco.seoul.go.kr/youth/pgm/home/yohome/bbsListJson.json
+    lookback_days: 60
+
   # SH공사(서울주택도시공사)는 공개 API가 없어 XHR 분석이 필요합니다.
   # scripts/probe 로 엔드포인트를 찾은 뒤 활성화하세요.
   - name: sh_notice
